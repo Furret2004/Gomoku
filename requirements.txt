@@ -1,0 +1,10 @@
+# Gomoku Online Multiplayer Game
+# Python 3.7+ required
+# All dependencies are from Python standard library
+
+# No external packages required!
+# The game uses only built-in Python modules:
+# - tkinter (for GUI)
+# - socket (for networking)
+# - threading (for concurrent connections)
+# - json (for message serialization)
