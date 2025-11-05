@@ -1,6 +1,6 @@
 # Gomoku - Online Multiplayer Game
 
-A Python implementation of Gomoku (Five in a Row) with online multiplayer support using socket programming and a graphical user interface.
+A Python implementation of Gomoku (Five in a Row) with **single-player AI** and **online multiplayer** modes using socket programming and a graphical user interface.
 
 ## 🎮 Game Description
 
@@ -8,8 +8,10 @@ Gomoku is a classic strategy board game where two players take turns placing sto
 
 ### Features
 
+- 🤖 **Single Player vs AI**: Play against a random AI opponent
 - 🌐 **Online Multiplayer**: Play against opponents over the network
 - 🎨 **GUI Interface**: Clean and intuitive tkinter-based interface
+- 🎯 **Main Menu**: Easy-to-use menu to choose game mode
 - 🔄 **Automatic Matchmaking**: Server automatically pairs waiting players
 - ♟️ **Classic Gomoku Rules**: 15x15 board with five-in-a-row winning condition
 - 🎯 **Real-time Updates**: Instant move synchronization between players
@@ -23,36 +25,51 @@ No additional packages required! The game uses only Python standard library.
 
 ## 🚀 How to Run
 
-### Step 1: Start the Server
+### Quick Start (Recommended)
 
-First, start the game server. This needs to be running before any clients can connect.
+**Start the game with the main menu:**
 
 ```bash
+python main.py
+```
+
+Then choose:
+- **🤖 Play vs AI** - Single player game against computer
+- **👥 Play vs Player** - Online multiplayer (requires server)
+
+### For Multiplayer Mode
+
+**Step 1: Start the server (in a separate terminal):**
+
+```bash
+python start_server.py
+```
+
+Or navigate to the network folder:
+```bash
+cd src/network
 python server.py
 ```
 
 The server will start on `0.0.0.0:5555` and wait for connections.
 
-### Step 2: Start the Client(s)
-
-Open a new terminal and start the client:
+**Step 2: Run the game and choose multiplayer:**
 
 ```bash
-python client.py
+python main.py
 ```
 
-When prompted, enter the server IP address:
+Click **"👥 Play vs Player"** and enter the server IP address:
 - For local testing: use `127.0.0.1` or `localhost`
 - For network play: use the server's IP address on your network
 
-### Step 3: Connect and Play
+**Step 3: Play!**
 
-1. Click "Connect to Server" button
-2. Wait for another player to connect
-3. When both players are connected, the game starts automatically
-4. Player X (black stones) goes first
-5. Click on the board to place your stone
-6. First to get 5 in a row wins!
+1. Wait for another player to connect
+2. When both players are connected, the game starts automatically
+3. Player X (black stones) goes first
+4. Click on the board to place your stone
+5. First to get 5 in a row wins!
 
 ## 🎯 Game Rules
 
@@ -66,10 +83,17 @@ When prompted, enter the server IP address:
 
 ```
 gomoku/
-├── game.py       # Core game logic and rules
-├── server.py     # Network server handling multiple games
-├── client.py     # GUI client with networking
-└── README.md     # This file
+├── main.py              # Main menu - START HERE!
+├── singleplayer.py      # Single player vs AI mode
+├── start_server.py      # Easy server launcher
+├── src/
+│   ├── game.py          # Core game logic and rules
+│   ├── ai.py            # AI opponent logic
+│   └── network/
+│       ├── server.py    # Network server handling multiple games
+│       └── client.py    # GUI client with networking
+├── assets/              # Game assets
+└── README.md            # This file
 ```
 
 ## 🔧 Advanced Usage
