@@ -64,6 +64,25 @@ class GomokuGame:
         
         return False
     
+    def get_valid_moves(self):
+        """Returns a list of all valid moves (row, col)"""
+        moves = []
+        for r in range(self.board_size):
+            for c in range(self.board_size):
+                if self.board[r][c] == ' ':
+                    moves.append((r, c))
+        return moves
+
+    def is_board_full(self):
+        """Check if the board is full (draw condition)"""
+        return not any(' ' in row for row in self.board)
+    
+    def get_temp_board(self, move, player):
+        """Returns a new game state after a hypothetical move"""
+        temp_game = copy.deepcopy(self)
+        temp_game.make_move(move[0], move[1], player)
+        return temp_game.board
+    
     def get_board_state(self):
         """Get current board state as a string"""
         return '\n'.join([''.join(row) for row in self.board])
