@@ -27,6 +27,8 @@ class GomokuClient:
         self.game_id = None
         self.my_turn = False
         self.connected = False
+        self.reconnect_attempts = 0
+        self.max_reconnect_attempts = 3
         
         # Game state
         self.board_size = 15
@@ -151,7 +153,9 @@ class GomokuClient:
         """Connect to the game server"""
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(10)  # 10 second timeout
             self.socket.connect((self.host, self.port))
+            self.socket.settimeout(None)  # Remove timeout after connection
             self.connected = True
             
             self.connect_button.config(state=tk.DISABLED)
@@ -162,8 +166,26 @@ class GomokuClient:
             receive_thread.daemon = True
             receive_thread.start()
             
+        except socket.timeout:
+            messagebox.showerror(
+                "Connection Timeout",
+                f"Could not connect to server at {self.host}:{self.port}\nConnection timed out after 10 seconds."
+            )
+        except ConnectionRefusedError:
+            messagebox.showerror(
+                "Connection Refused",
+                f"Server at {self.host}:{self.port} refused connection.\nMake sure the server is running."
+            )
+        except socket.gaierror:
+            messagebox.showerror(
+                "Invalid Address",
+                f"Could not resolve host: {self.host}\nPlease check the IP address."
+            )
         except Exception as e:
-            messagebox.showerror("Connection Error", f"Could not connect to server: {e}")
+            messagebox.showerror(
+                "Connection Error",
+                f"Could not connect to server: {type(e).__name__}\n{e}"
+            )
     
     def receive_messages(self):
         """Receive messages from server"""
@@ -173,13 +195,33 @@ class GomokuClient:
                 if not data:
                     break
                 
-                message = json.loads(data.decode('utf-8'))
-                self.handle_message(message)
+                try:
+                    message = json.loads(data.decode('utf-8'))
+                    self.handle_message(message)
+                except json.JSONDecodeError as je:
+                    print(f"[Client] Invalid JSON received: {je}")
+                    continue
                 
+        except ConnectionResetError:
+            if self.connected:
+                print("[Client] Server closed connection")
+                self.connected = False
+                self.root.after(0, self.handle_disconnection)
+        except socket.error as se:
+            if self.connected:
+                print(f"[Client] Socket error: {se}")
+                self.root.after(0, lambda: messagebox.showerror(
+                    "Network Error",
+                    f"Network error occurred: {se}"
+                ))
+                self.connected = False
         except Exception as e:
             if self.connected:
-                print(f"Error receiving message: {e}")
-                self.root.after(0, lambda: messagebox.showerror("Connection Lost", "Lost connection to server"))
+                print(f"[Client] Error receiving message: {e}")
+                self.root.after(0, lambda: messagebox.showerror(
+                    "Connection Lost",
+                    f"Lost connection to server: {type(e).__name__}"
+                ))
                 self.connected = False
     
     def handle_message(self, message):
@@ -231,6 +273,10 @@ class GomokuClient:
     
     def send_move(self, row, col):
         """Send move to server"""
+        if not self.connected:
+            messagebox.showerror("Error", "Not connected to server")
+            return
+        
         try:
             message = {
                 'type': 'move',
@@ -239,8 +285,11 @@ class GomokuClient:
             }
             data = json.dumps(message).encode('utf-8')
             self.socket.send(data)
+        except socket.error as se:
+            messagebox.showerror("Network Error", f"Failed to send move: {se}")
+            self.connected = False
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to send move: {e}")
+            messagebox.showerror("Error", f"Failed to send move: {type(e).__name__}\n{e}")
     
     def request_new_game(self):
         """Request a new game"""
@@ -270,6 +319,61 @@ class GomokuClient:
     def update_status(self, text):
         """Update status label"""
         self.status_label.config(text=text)
+    
+    def handle_disconnection(self):
+        """Handle disconnection with reconnection option"""
+        response = messagebox.askyesno(
+            "Connection Lost",
+            f"Lost connection to server.\n\nAttempt to reconnect?\n(Attempts left: {self.max_reconnect_attempts - self.reconnect_attempts})",
+            icon='warning'
+        )
+        
+        if response and self.reconnect_attempts < self.max_reconnect_attempts:
+            self.reconnect_attempts += 1
+            self.attempt_reconnect()
+        else:
+            messagebox.showinfo("Disconnected", "You have been disconnected from the server.")
+            self.quit_game()
+    
+    def attempt_reconnect(self):
+        """Try to reconnect to server"""
+        self.update_status(f"Reconnecting... (Attempt {self.reconnect_attempts}/{self.max_reconnect_attempts})")
+        
+        try:
+            # Close old socket
+            if self.socket:
+                try:
+                    self.socket.close()
+                except:
+                    pass
+            
+            # Try to reconnect
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(5)
+            self.socket.connect((self.host, self.port))
+            self.socket.settimeout(None)
+            self.connected = True
+            self.reconnect_attempts = 0
+            
+            self.update_status("Reconnected! Waiting for opponent...")
+            messagebox.showinfo("Reconnected", "Successfully reconnected to server!")
+            
+            # Restart receiving thread
+            receive_thread = threading.Thread(target=self.receive_messages)
+            receive_thread.daemon = True
+            receive_thread.start()
+            
+        except Exception as e:
+            print(f"[Client] Reconnection failed: {e}")
+            if self.reconnect_attempts < self.max_reconnect_attempts:
+                # Try again
+                self.root.after(2000, lambda: self.handle_disconnection())
+            else:
+                messagebox.showerror(
+                    "Reconnection Failed",
+                    f"Could not reconnect after {self.max_reconnect_attempts} attempts."
+                )
+                self.quit_game()
     
     def quit_game(self):
         """Quit the game"""
