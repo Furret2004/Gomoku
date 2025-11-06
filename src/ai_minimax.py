@@ -136,7 +136,7 @@ class MinimaxAI:
             else:
                 return 0  # Draw
         
-        legal_moves = self.get_legal_moves()
+        legal_moves = self.get_legal_moves_nearby()
         if not legal_moves:
             return 0  # Draw
         
@@ -283,6 +283,29 @@ class MinimaxAI:
                             score += self.BLOCKED_TWO
         
         return score
+    
+    def get_legal_moves_nearby(self, radius=2):
+        moves = set()
+        board = self.game.board
+        size = self.game.board_size
+        
+        # If board empty, return center
+        if all(board[r][c] == ' ' for r in range(size) for c in range(size)):
+            return [(size // 2, size // 2)]
+        
+        # Find all occupied positions
+        for row in range(size):
+            for col in range(size):
+                if board[row][col] != ' ':
+                    # Add all empty cells within radius
+                    for dr in range(-radius, radius + 1):
+                        for dc in range(-radius, radius + 1):
+                            r, c = row + dr, col + dc
+                            if (0 <= r < size and 0 <= c < size and 
+                                board[r][c] == ' '):
+                                moves.add((r, c))
+        
+        return list(moves)
     
     def get_legal_moves(self) -> List[Tuple[int, int]]:
         """
