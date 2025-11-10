@@ -38,6 +38,7 @@ class MinimaxAI:
         self.depth = depth
         self.use_alpha_beta = use_alpha_beta
         self.nodes_evaluated = 0  # For performance tracking
+        self.board_score_cache = {}  # Cache for board evaluations
         
     def make_move(self) -> Optional[Tuple[int, int]]:
         """
@@ -47,8 +48,10 @@ class MinimaxAI:
             (row, col) tuple or None if no valid moves
         """
         self.nodes_evaluated = 0
+        self.board_score_cache.clear()  # Clear cache for new search
         best_move = self.get_best_move()
         print(f"[AI] Evaluated {self.nodes_evaluated} nodes, depth={self.depth}")
+        print(f"[AI] Cache size: {len(self.board_score_cache)} positions")
         return best_move
     
     def get_best_move(self) -> Optional[Tuple[int, int]]:
@@ -192,27 +195,47 @@ class MinimaxAI:
                 
             return min_eval
     
+    def hash_board(self) -> tuple:
+        """
+        Create a hash of the current board state for caching
+        
+        Returns:
+            Hashable tuple representation of board
+        """
+        return tuple(tuple(row) for row in self.game.board)
+    
     def evaluate_board(self) -> float:
         """
         Evaluate current board position using pattern-based heuristics
+        WITH CACHING for performance optimization
         
         Returns:
             Score (positive = good for AI, negative = good for opponent)
         """
-        ai_score = self.evaluate_player(self.player)
-        opp_score = self.evaluate_player(self.opponent)
+        # Check cache first
+        board_hash = self.hash_board()
+        if board_hash in self.board_score_cache:
+            return self.board_score_cache[board_hash]
         
-        return ai_score - opp_score
+        # Calculate score using original logic
+        ai_score = self.count_patterns(self.player)
+        opp_score = self.count_patterns(self.opponent)
+        score = ai_score - opp_score
+        
+        # Store in cache
+        self.board_score_cache[board_hash] = score
+        return score
     
-    def evaluate_player(self, player: str) -> float:
+    def count_patterns(self, player: str) -> float:
         """
-        Evaluate board for a specific player by counting patterns
+        Count and score all patterns for a specific player
+        (Renamed from evaluate_player for clarity)
         
         Args:
             player: Player symbol to evaluate
             
         Returns:
-            Total score for this player
+            Total score for this player's patterns
         """
         score = 0
         board = self.game.board
@@ -251,17 +274,21 @@ class MinimaxAI:
                         c += dc
                     
                     # Check if line is blocked on ends
-                    # Check start
+                    # Check start (out of bounds = blocked, or opponent stone = blocked)
                     start_r = row - dr
                     start_c = col - dc
-                    start_blocked = (not (0 <= start_r < size and 0 <= start_c < size) or
-                                   board[start_r][start_c] != ' ')
+                    if not (0 <= start_r < size and 0 <= start_c < size):
+                        start_blocked = True  # Edge of board blocks
+                    else:
+                        start_blocked = (board[start_r][start_c] != ' ')
                     
-                    # Check end
+                    # Check end (out of bounds = blocked, or opponent stone = blocked)
                     end_r = row + dr * length
                     end_c = col + dc * length
-                    end_blocked = (not (0 <= end_r < size and 0 <= end_c < size) or
-                                 board[end_r][end_c] != ' ')
+                    if not (0 <= end_r < size and 0 <= end_c < size):
+                        end_blocked = True  # Edge of board blocks
+                    else:
+                        end_blocked = (board[end_r][end_c] != ' ')
                     
                     # Score based on pattern
                     if length >= 5:
