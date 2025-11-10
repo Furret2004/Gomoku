@@ -249,9 +249,9 @@ class GomokuClient:
             self.game.make_move(row, col, player)
             self.root.after(0, lambda: self.draw_stone(row, col, player))
             
-            if self.game.game_over:
-                self.root.after(0, lambda: self.show_game_over(False))
-            else:
+            # Don't check game_over here - let the server's game_over message handle it
+            # This prevents duplicate "You lose!" messages
+            if not self.game.game_over:
                 self.my_turn = True
                 self.root.after(0, lambda: self.update_status("Your turn!"))
             
@@ -263,6 +263,10 @@ class GomokuClient:
             
         elif msg_type == 'reset':
             self.root.after(0, self.reset_board)
+            
+        elif msg_type == 'waiting_for_opponent':
+            msg = message.get('message', 'Waiting for opponent...')
+            self.root.after(0, lambda: self.update_status(msg))
             
         elif msg_type == 'opponent_disconnected':
             self.root.after(0, lambda: messagebox.showinfo("Game Over", message['message']))
@@ -293,13 +297,16 @@ class GomokuClient:
     
     def request_new_game(self):
         """Request a new game"""
-        self.reset_board()
+        # Disable button to prevent multiple clicks
+        self.new_game_button.config(state=tk.DISABLED)
         try:
             message = {'type': 'reset'}
             data = json.dumps(message).encode('utf-8')
             self.socket.send(data)
+            self.update_status("Waiting for opponent to click New Game...")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to request new game: {e}")
+            self.new_game_button.config(state=tk.NORMAL)
     
     def reset_board(self):
         """Reset the board for new game"""
@@ -309,6 +316,8 @@ class GomokuClient:
         self.my_turn = (self.player_symbol == 'X')
         status = f"New game! You are {self.player_symbol}. " + ("Your turn!" if self.my_turn else "Opponent's turn")
         self.update_status(status)
+        # Re-enable new game button
+        self.new_game_button.config(state=tk.NORMAL)
     
     def show_game_over(self, you_won):
         """Show game over message"""

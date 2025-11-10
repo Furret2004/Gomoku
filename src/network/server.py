@@ -24,33 +24,42 @@ class GameServer:
         self.games = {}  # game_id -> game instance
         self.waiting_player = None  # Player waiting for opponent
         self.game_counter = 0
+        self.ready_players = {}  # game_id -> set of ready player symbols
         
     def start(self):
         """Start the server"""
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Set timeout to make server responsive to CTRL-C
+        self.server_socket.settimeout(1.0)
         self.server_socket.bind((self.host, self.port))
         self.server_socket.listen(5)
         
         print(f"[SERVER] Started on {self.host}:{self.port}")
         print("[SERVER] Waiting for connections...")
+        print("[SERVER] Press CTRL-C to stop")
         
         try:
             while True:
-                client_socket, address = self.server_socket.accept()
-                print(f"[SERVER] New connection from {address}")
-                
-                # Create thread for each client
-                client_thread = threading.Thread(
-                    target=self.handle_client,
-                    args=(client_socket, address)
-                )
-                client_thread.daemon = True
-                client_thread.start()
+                try:
+                    client_socket, address = self.server_socket.accept()
+                    print(f"[SERVER] New connection from {address}")
+                    
+                    # Create thread for each client
+                    client_thread = threading.Thread(
+                        target=self.handle_client,
+                        args=(client_socket, address)
+                    )
+                    client_thread.daemon = True
+                    client_thread.start()
+                except socket.timeout:
+                    # Timeout allows checking for KeyboardInterrupt
+                    continue
         except KeyboardInterrupt:
             print("\n[SERVER] Shutting down...")
         finally:
             self.server_socket.close()
+            print("[SERVER] Server stopped")
     
     def handle_client(self, client_socket, address):
         """Handle individual client connection"""
@@ -133,6 +142,10 @@ class GameServer:
                     
                     # Validate move
                     if game.make_move(row, col, player_symbol):
+                        # Check if game over BEFORE sending to opponent
+                        # This prevents both players from triggering game_over
+                        game_is_over = game.game_over
+                        
                         # Send move to opponent
                         self.send_message(opponent_socket, {
                             'type': 'opponent_move',
@@ -141,8 +154,12 @@ class GameServer:
                             'player': player_symbol
                         })
                         
-                        # Check if game over
-                        if game.game_over:
+                        # Send game over messages if game ended
+                        if game_is_over:
+                            # Clear ready status when game ends
+                            if game_id in self.ready_players:
+                                self.ready_players[game_id].clear()
+                            
                             self.send_message(client_socket, {
                                 'type': 'game_over',
                                 'winner': game.winner,
@@ -153,7 +170,7 @@ class GameServer:
                                 'winner': game.winner,
                                 'message': 'You lose!'
                             })
-                            break
+                            # Don't break - continue listening for reset message
                     else:
                         self.send_message(client_socket, {
                             'type': 'error',
@@ -161,11 +178,36 @@ class GameServer:
                         })
                 
                 elif message['type'] == 'reset':
-                    game.reset()
-                    self.send_message(opponent_socket, {
-                        'type': 'reset',
-                        'message': 'Opponent requested new game'
-                    })
+                    # Track ready players
+                    if game_id not in self.ready_players:
+                        self.ready_players[game_id] = set()
+                    
+                    self.ready_players[game_id].add(player_symbol)
+                    print(f"[SERVER] Player {player_symbol} ready for new game in game {game_id}")
+                    print(f"[SERVER] Ready players for game {game_id}: {self.ready_players[game_id]}")
+                    
+                    # Check if both players are ready
+                    if len(self.ready_players[game_id]) == 2:
+                        # Both players ready - start new game
+                        game.reset()
+                        self.ready_players[game_id].clear()
+                        print(f"[SERVER] Game {game_id} reset - both players ready")
+                        
+                        # Notify both players
+                        self.send_message(client_socket, {
+                            'type': 'reset',
+                            'message': 'New game started!'
+                        })
+                        self.send_message(opponent_socket, {
+                            'type': 'reset',
+                            'message': 'New game started!'
+                        })
+                    else:
+                        # Only one player ready - notify waiting
+                        self.send_message(client_socket, {
+                            'type': 'waiting_for_opponent',
+                            'message': 'Waiting...'
+                        })
                 
                 elif message['type'] == 'disconnect':
                     break

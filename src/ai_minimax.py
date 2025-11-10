@@ -58,7 +58,7 @@ class MinimaxAI:
         Returns:
             Best (row, col) move or None
         """
-        legal_moves = self.get_legal_moves()
+        legal_moves = self.get_legal_moves_nearby()
         
         if not legal_moves:
             return None
