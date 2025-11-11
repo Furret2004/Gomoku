@@ -71,15 +71,16 @@ class GameServer:
             # Match players
             if self.waiting_player is None:
                 # First player - wait for opponent
-                self.waiting_player = {
-                    'socket': client_socket,
-                    'address': address
-                }
-                player_symbol = 'X'
-                
                 # Create new game
                 game_id = self.game_counter
                 self.game_counter += 1
+                
+                self.waiting_player = {
+                    'socket': client_socket,
+                    'address': address,
+                    'game_id': game_id  # CRITICAL: Store game_id for the second player
+                }
+                player_symbol = 'X'
                 self.games[game_id] = {
                     'game': GomokuGame(),
                     'player_X': client_socket,
@@ -104,7 +105,7 @@ class GameServer:
             else:
                 # Second player - start game
                 player_symbol = 'O'
-                game_id = self.waiting_player['game_id'] if 'game_id' in self.waiting_player else self.game_counter - 1
+                game_id = self.waiting_player['game_id']
                 
                 self.games[game_id]['player_O'] = client_socket
                 opponent_socket = self.games[game_id]['player_X']
