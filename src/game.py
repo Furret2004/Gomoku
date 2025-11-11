@@ -74,3 +74,5 @@ class GomokuGame:
         self.current_player = 'X'
         self.winner = None
         self.game_over = False
+
+    

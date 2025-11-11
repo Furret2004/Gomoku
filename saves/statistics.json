@@ -1,8 +1,8 @@
 {
   "singleplayer": {
-    "total_games": 8,
-    "wins": 6,
-    "losses": 2,
+    "total_games": 19,
+    "wins": 15,
+    "losses": 4,
     "draws": 0,
     "by_difficulty": {
       "Easy": {
@@ -18,15 +18,15 @@
         "draws": 0
       },
       "Hard": {
-        "games": 4,
-        "wins": 2,
+        "games": 6,
+        "wins": 4,
         "losses": 2,
         "draws": 0
       },
       "Expert": {
-        "games": 1,
-        "wins": 1,
-        "losses": 0,
+        "games": 10,
+        "wins": 8,
+        "losses": 2,
         "draws": 0
       }
     }
@@ -82,6 +82,72 @@
     },
     {
       "timestamp": "2025-11-10T18:32:01.220853",
+      "mode": "singleplayer",
+      "result": "win",
+      "difficulty": "Expert"
+    },
+    {
+      "timestamp": "2025-11-11T15:09:28.398985",
+      "mode": "singleplayer",
+      "result": "win",
+      "difficulty": "Expert"
+    },
+    {
+      "timestamp": "2025-11-11T15:44:02.623794",
+      "mode": "singleplayer",
+      "result": "win",
+      "difficulty": "Expert"
+    },
+    {
+      "timestamp": "2025-11-11T15:59:24.219766",
+      "mode": "singleplayer",
+      "result": "win",
+      "difficulty": "Expert"
+    },
+    {
+      "timestamp": "2025-11-11T16:14:41.520631",
+      "mode": "singleplayer",
+      "result": "loss",
+      "difficulty": "Expert"
+    },
+    {
+      "timestamp": "2025-11-11T16:15:19.195566",
+      "mode": "singleplayer",
+      "result": "loss",
+      "difficulty": "Expert"
+    },
+    {
+      "timestamp": "2025-11-11T16:31:15.402688",
+      "mode": "singleplayer",
+      "result": "win",
+      "difficulty": "Expert"
+    },
+    {
+      "timestamp": "2025-11-11T22:56:06.843711",
+      "mode": "singleplayer",
+      "result": "win",
+      "difficulty": "Expert"
+    },
+    {
+      "timestamp": "2025-11-11T23:21:33.824244",
+      "mode": "singleplayer",
+      "result": "win",
+      "difficulty": "Expert"
+    },
+    {
+      "timestamp": "2025-11-11T23:22:36.177700",
+      "mode": "singleplayer",
+      "result": "win",
+      "difficulty": "Hard"
+    },
+    {
+      "timestamp": "2025-11-11T23:23:08.638286",
+      "mode": "singleplayer",
+      "result": "win",
+      "difficulty": "Hard"
+    },
+    {
+      "timestamp": "2025-11-11T23:29:55.658675",
       "mode": "singleplayer",
       "result": "win",
       "difficulty": "Expert"
