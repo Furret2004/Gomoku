@@ -1,8 +1,8 @@
 {
   "singleplayer": {
-    "total_games": 10,
-    "wins": 8,
-    "losses": 2,
+    "total_games": 13,
+    "wins": 9,
+    "losses": 4,
     "draws": 0,
     "by_difficulty": {
       "Easy": {
@@ -12,15 +12,15 @@
         "draws": 0
       },
       "Medium": {
-        "games": 2,
-        "wins": 2,
-        "losses": 0,
+        "games": 4,
+        "wins": 3,
+        "losses": 1,
         "draws": 0
       },
       "Hard": {
-        "games": 4,
+        "games": 5,
         "wins": 2,
-        "losses": 2,
+        "losses": 3,
         "draws": 0
       },
       "Expert": {
@@ -97,6 +97,24 @@
       "mode": "singleplayer",
       "result": "win",
       "difficulty": "Expert"
+    },
+    {
+      "timestamp": "2025-11-13T09:33:03.105507",
+      "mode": "singleplayer",
+      "result": "win",
+      "difficulty": "Medium"
+    },
+    {
+      "timestamp": "2025-11-13T09:33:21.075919",
+      "mode": "singleplayer",
+      "result": "loss",
+      "difficulty": "Medium"
+    },
+    {
+      "timestamp": "2025-11-13T18:33:39.704645",
+      "mode": "singleplayer",
+      "result": "loss",
+      "difficulty": "Hard"
     }
   ]
 }
