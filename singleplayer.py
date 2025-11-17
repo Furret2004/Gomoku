@@ -197,7 +197,7 @@ class GomokuSinglePlayer:
             self.game_active = False
             self.update_status("You win! 🎉", 'green')
             self.statistics.record_game('singleplayer', 'win', self.difficulty)
-            messagebox.showinfo("Game Over", "Congratulations! You won! 🎉")
+            self.show_game_over_dialog("You Win!", "Congratulations! You won! 🎉", 'win')
             return
         
         # Check for draw (board full)
@@ -205,7 +205,7 @@ class GomokuSinglePlayer:
             self.game_active = False
             self.update_status("Draw! Board is full", 'orange')
             self.statistics.record_game('singleplayer', 'draw', self.difficulty)
-            messagebox.showinfo("Game Over", "It's a draw! The board is full.")
+            self.show_game_over_dialog("Draw!", "It's a draw! The board is full.", 'draw')
             return
         
         # AI's turn
@@ -229,7 +229,7 @@ class GomokuSinglePlayer:
                 self.game_active = False
                 self.update_status("AI wins! 😢", 'red')
                 self.statistics.record_game('singleplayer', 'loss', self.difficulty)
-                messagebox.showinfo("Game Over", "AI wins! Better luck next time!")
+                self.show_game_over_dialog("AI Wins!", "AI wins! Better luck next time!", 'loss')
                 return
             
             # Check for draw
@@ -237,7 +237,7 @@ class GomokuSinglePlayer:
                 self.game_active = False
                 self.update_status("Draw! Board is full", 'orange')
                 self.statistics.record_game('singleplayer', 'draw', self.difficulty)
-                messagebox.showinfo("Game Over", "It's a draw! The board is full.")
+                self.show_game_over_dialog("Draw!", "It's a draw! The board is full.", 'draw')
                 return
         
         # Player's turn again
@@ -250,6 +250,237 @@ class GomokuSinglePlayer:
                 if self.game.board[row][col] == ' ':
                     return False
         return True
+    
+    def show_game_over_dialog(self, title, message, result_type):
+        """
+        Show game over dialog with options to play again or return to main menu
+        
+        Args:
+            title: Dialog title
+            message: Game result message
+            result_type: 'win', 'loss', or 'draw'
+        """
+        # Create dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title(title)
+        dialog.geometry("450x350")
+        dialog.resizable(False, False)
+        dialog.configure(bg='#2C3E50')
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center the dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Result emoji and color
+        emoji_map = {
+            'win': ('🎉', '#27AE60'),
+            'loss': ('😢', '#E74C3C'),
+            'draw': ('🤝', '#F39C12')
+        }
+        emoji, color = emoji_map.get(result_type, ('', '#3498DB'))
+        
+        # Title with emoji
+        title_label = tk.Label(
+            dialog,
+            text=f"{emoji} {title} {emoji}",
+            font=('Arial', 24, 'bold'),
+            fg='white',
+            bg='#2C3E50'
+        )
+        title_label.pack(pady=20)
+        
+        # Message
+        message_label = tk.Label(
+            dialog,
+            text=message,
+            font=('Arial', 14),
+            fg='#ECF0F1',
+            bg='#2C3E50',
+            wraplength=380
+        )
+        message_label.pack(pady=10)
+        
+        # Difficulty info
+        diff_label = tk.Label(
+            dialog,
+            text=f"Difficulty: {self.difficulty}",
+            font=('Arial', 11, 'italic'),
+            fg='#BDC3C7',
+            bg='#2C3E50'
+        )
+        diff_label.pack(pady=5)
+        
+        # Button frame
+        button_frame = tk.Frame(dialog, bg='#2C3E50')
+        button_frame.pack(pady=30)
+        
+        # Play Again button (go to difficulty selection)
+        play_again_button = tk.Button(
+            button_frame,
+            text="🔄 Play Again",
+            command=lambda: self.play_again_from_dialog(dialog),
+            font=('Arial', 14, 'bold'),
+            width=15,
+            height=2,
+            bg='#3498DB',
+            fg='white',
+            activebackground='#2980B9',
+            activeforeground='white',
+            cursor='hand2',
+            relief=tk.RAISED,
+            bd=3
+        )
+        play_again_button.pack(pady=8)
+        
+        # Main Menu button
+        main_menu_button = tk.Button(
+            button_frame,
+            text="🏠 Main Menu",
+            command=lambda: self.return_to_main_menu(dialog),
+            font=('Arial', 14, 'bold'),
+            width=15,
+            height=2,
+            bg='#95A5A6',
+            fg='white',
+            activebackground='#7F8C8D',
+            activeforeground='white',
+            cursor='hand2',
+            relief=tk.RAISED,
+            bd=3
+        )
+        main_menu_button.pack(pady=8)
+        
+        # Prevent closing without choosing
+        dialog.protocol("WM_DELETE_WINDOW", lambda: None)
+    
+    def play_again_from_dialog(self, dialog):
+        """
+        Close dialog and show difficulty selection for new game
+        """
+        dialog.destroy()
+        
+        # Show difficulty selection dialog
+        difficulty = self.show_difficulty_selection_dialog()
+        
+        if difficulty:
+            # Update difficulty and start new game
+            self.difficulty = difficulty
+            self.difficulty_var.set(difficulty)
+            self.diff_info_label.config(text=AIManager.get_description(difficulty))
+            self.new_game()
+    
+    def return_to_main_menu(self, dialog):
+        """
+        Close dialog and return to main menu
+        """
+        dialog.destroy()
+        self.root.destroy()
+        
+        # Import and show main menu
+        from main import GomokuMenu
+        menu = GomokuMenu()
+        menu.run()
+    
+    def show_difficulty_selection_dialog(self):
+        """
+        Show difficulty selection dialog
+        
+        Returns:
+            Selected difficulty or None if cancelled
+        """
+        # Create dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Select Difficulty")
+        dialog.geometry("400x550")
+        dialog.resizable(False, False)
+        dialog.configure(bg='#2C3E50')
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center the dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Variable to store selection
+        selected_difficulty = [None]
+        
+        # Title
+        title_label = tk.Label(
+            dialog,
+            text="Choose Difficulty",
+            font=('Arial', 20, 'bold'),
+            fg='white',
+            bg='#2C3E50'
+        )
+        title_label.pack(pady=20)
+        
+        # Button frame
+        button_frame = tk.Frame(dialog, bg='#2C3E50')
+        button_frame.pack(pady=20, fill=tk.BOTH, expand=True, padx=30)
+        
+        # Difficulty options
+        difficulties = AIManager.get_difficulty_list()
+        
+        # Color scheme for buttons
+        colors = {
+            'Easy': ('#27AE60', '#229954'),
+            'Medium': ('#F39C12', '#D68910'),
+            'Hard': ('#E74C3C', '#C0392B'),
+            'Expert': ('#8E44AD', '#7D3C98'),
+            'Expert+': ('#C0392B', '#A93226')
+        }
+        
+        def on_difficulty_select(diff):
+            selected_difficulty[0] = diff
+            dialog.destroy()
+        
+        # Create button for each difficulty
+        for difficulty in difficulties:
+            description = AIManager.get_description(difficulty)
+            bg_color, active_color = colors.get(difficulty, ('#3498DB', '#2980B9'))
+            
+            # Container frame
+            container = tk.Frame(button_frame, bg='#2C3E50')
+            container.pack(pady=6, fill=tk.X)
+            
+            # Difficulty button
+            btn = tk.Button(
+                container,
+                text=difficulty,
+                command=lambda d=difficulty: on_difficulty_select(d),
+                font=('Arial', 12, 'bold'),
+                width=18,
+                height=1,
+                bg=bg_color,
+                fg='white',
+                activebackground=active_color,
+                activeforeground='white',
+                cursor='hand2',
+                relief=tk.RAISED,
+                bd=2
+            )
+            btn.pack()
+            
+            # Description label
+            desc_label = tk.Label(
+                container,
+                text=description,
+                font=('Arial', 8, 'italic'),
+                fg='#BDC3C7',
+                bg='#2C3E50'
+            )
+            desc_label.pack(pady=2)
+        
+        # Wait for dialog to close
+        self.root.wait_window(dialog)
+        
+        return selected_difficulty[0]
     
     def new_game(self):
         """Start a new game"""

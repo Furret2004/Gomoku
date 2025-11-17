@@ -4,6 +4,7 @@ AI Manager - Central management for different AI difficulty levels
 
 from src.ai import GomokuAI as RandomAI
 from src.ai_minimax import MinimaxAI
+from src.ai_minimax_optimized import MinimaxAI as OptimizedMinimaxAI
 
 
 class AIManager:
@@ -19,19 +20,24 @@ class AIManager:
             'kwargs': {}
         },
         'Medium': {
-            'ai_class': MinimaxAI,
-            'description': 'Strategic AI - Balanced gameplay',
-            'kwargs': {'depth': 2, 'use_alpha_beta': True}
+            'ai_class': OptimizedMinimaxAI,
+            'description': 'Strategic AI - Balanced gameplay ⚡',
+            'kwargs': {'depth': 2, 'time_limit': 2.0, 'use_iterative_deepening': True}
         },
         'Hard': {
-            'ai_class': MinimaxAI,
-            'description': 'Advanced AI - Challenging opponent',
-            'kwargs': {'depth': 3, 'use_alpha_beta': True}
+            'ai_class': OptimizedMinimaxAI,
+            'description': 'Advanced AI - Challenging opponent ⚡',
+            'kwargs': {'depth': 3, 'time_limit': 3.0, 'use_iterative_deepening': True}
         },
         'Expert': {
-            'ai_class': MinimaxAI,
-            'description': 'Master level - Maximum challenge',
-            'kwargs': {'depth': 4, 'use_alpha_beta': True}
+            'ai_class': OptimizedMinimaxAI,
+            'description': 'Master level - Maximum challenge ⚡',
+            'kwargs': {'depth': 4, 'time_limit': 5.0, 'use_iterative_deepening': True}
+        },
+        'Expert+': {
+            'ai_class': OptimizedMinimaxAI,
+            'description': 'Godlike - Near perfect play 🔥',
+            'kwargs': {'depth': 5, 'time_limit': 10.0, 'use_iterative_deepening': True}
         }
     }
     
